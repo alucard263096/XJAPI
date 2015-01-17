@@ -22,7 +22,139 @@
 	{
 		
 	}
-	
+
+	public function getProductList($lastUpdatedDate)
+	{
+		$sql="
+		select m.FMASTERID product_id,
+m.FNUMBER product_no,
+ml.FNAME,
+base.F_XJ_ALIAS alias,
+base.F_XJ_CATEGORY category,
+base.F_XJ_CLASS class,
+base.F_XJ_CLASS3 class3,
+base.F_XJ_CLASS4 class4,
+base.F_XJ_CLASS4 class4,
+base.F_XJ_Style style,
+base.F_XJ_GOLDMATERIAL goldmaterial,
+base.F_XJ_REFSIZE size,
+base.F_XJ_PROCESSINGCHANGES processingchanges,
+base.F_XJ_CERTIFICATESNO certificatesno,
+base.F_XJ_THEME theme,
+base.F_XJ_FIT fitgroup,
+base.F_XJ_FORM manner,
+base.F_XJ_STANDARDWEIGHT standard_weight
+ from t_BD_Material m
+inner join T_BD_MATERIAL_L ml on m.FMASTERID=ml.FMATERIALID and ml.FLOCALEID=2052
+inner join t_BD_MaterialBase base on m.FMASTERID=base.FMATERIALID
+where base.FISSALE=1 
+and m.FDOCUMENTSTATUS='C' 
+and m.FFORBIDSTATUS='A'
+and base.F_XJ_GOODSTYPE=2";
+if($lastUpdatedDate!=""){
+
+$sql=$sql."and  m.modifydate>='$lastUpdatedDate'";
+
+}
+
+		
+
+		$query = $this->dbmgr->query($sql);
+		$result = $this->dbmgr->fetch_array_all($query); 
+
+
+		$sql="
+select gw.FMATERIALID product_id,gw.F_XJ_WEIGHTDECIMAL product_weight 
+ from XJ_T_GoodsWeight gw
+inner join T_BD_MATERIAL m on gw.FMATERIALID=m.FMASTERID
+inner join t_BD_MaterialBase base on m.FMASTERID=base.FMATERIALID
+where base.FISSALE=1 
+and m.FDOCUMENTSTATUS='C' 
+and m.FFORBIDSTATUS='A'
+and base.F_XJ_GOODSTYPE=2";
+if($lastUpdatedDate!=""){
+
+$sql=$sql."and  m.modifydate>='$lastUpdatedDate'";
+
+}
+
+		$query = $this->dbmgr->query($sql);
+		$wgresult = $this->dbmgr->fetch_array_all($query); 
+
+		$mcount=count($result);
+
+		for($i=0;$i<$mcount;$i++){
+
+			$weightls=Array();
+			$wcount=count($wgresult);
+			for($j=0;$j<$wcount;$j++){
+
+				$wrs=$wgresult[$j];
+				if($wrs["product_id"]==$result[$i]["product_id"]){
+					$weightls[]=$wrs;
+				}
+			}
+			$result[$i]["weightlist"]=$weightls;
+		}
+		return $result;
+	}
+
+	public function getProductCategory(){
+
+		$sql="select c.FID id,c.F_XJ_LASTCLASS lastclassid,cl.FNAME name 
+		from XJ_t_Category c
+inner join XJ_t_Category_L cl on c.FID=cl.FID
+where FDOCUMENTSTATUS='C'
+and FFORBIDSTATUS='A'";
+		
+		$query = $this->dbmgr->query($sql);
+		$result = $this->dbmgr->fetch_array_all($query); 
+
+		$category=$this->loopCategory($result,0);
+		return $category;
+	}
+
+	public function loopCategory($result,$lastid){
+		$arr=Array();
+		$count=count($result);
+
+		for($i=0;$i<$count;$i++){
+			if($result[$i]["lastclassid"]==$lastid){
+				$arr[]=$result[$i];
+			}
+		}
+		
+		$count=count($arr);
+		for($i=0;$i<$count;$i++){
+			$carr=$this->loopCategory($result,$arr[$i]["id"]);
+			$arr[$i]["subclass"]=$carr;
+		}
+
+		return $arr;
+	}
+
+	public function getProductProperties(){
+
+		$arr=Array();
+		$arr["参考尺寸"]=$this->getPropertiesEntry("005056c000089b2311e49643695897d3");
+		$arr["风格"]=$this->getPropertiesEntry("005056c000089b2311e49643b56dca74");
+		$arr["金料"]=$this->getPropertiesEntry("005056c000089b2311e49643160432e5");
+		$arr["款式"]=$this->getPropertiesEntry("005056c000089b2311e49642de9fb429");
+		$arr["适宜人群"]=$this->getPropertiesEntry("005056c000089b2311e49643a492056b");
+		$arr["主题"]=$this->getPropertiesEntry("005056c000089b2311e49643884afc4e");
+
+		return $arr;
+
+	}
+
+	public function getPropertiesEntry($id){
+		$sql="select a.FID mid,a.FENTRYID id, FDATAVALUE name from T_BAS_ASSISTANTDATAENTRY a
+inner join T_BAS_ASSISTANTDATAENTRY_L al on a.FENTRYID=al.FENTRYID
+where a.FID='$id';";
+		$query = $this->dbmgr->query($sql);
+		$result = $this->dbmgr->fetch_array_all($query); 
+		return $result;
+	}
  }
  
  $productMgr=ProductMgr::getInstance();

@@ -2,18 +2,33 @@
 
 require 'include/common.inc.php';
  require ROOT.'/classes/mgr/webservice.cls.php';
- require ROOT.'/functions/test.func.php';
+ require ROOT.'/functions/product.func.php';
  
  
  $signature=array(array('struct', 'struct'));
 
- //echo getMyName();
+ //$r= test();
+ //print_r($r);
  //exit;
-
+ //$arr["validation_code"]=$CONFIG['validation_code'];
+ //print_r(getProductList($arr));
+ //print_r(getProductCategory($arr));
+ //print_r(getProductProperties($arr));
+ //exit;
  //registed methods
  $registed_method_arr=array(
-		"GetMyName" => array(
-			"function" => "getMyName",
+		"GetProductList" => array(
+			"function" => "getProductList",
+			"signature" =>$signature,
+			"docstring" => ""
+		),
+		"GetProductCategory" => array(
+			"function" => "getProductCategory",
+			"signature" =>$signature,
+			"docstring" => ""
+		),
+		"GetProductProperties" => array(
+			"function" => "getProductProperties",
 			"signature" =>$signature,
 			"docstring" => ""
 		));

@@ -15,10 +15,10 @@ $CONFIG['validation_code']='3a232d21243d';
 
 #[Database]
 $CONFIG['database']['provider']		= 'sqlsrv';  //mssql,sqlsrv
-$CONFIG['database']['host']		= '5c52404b59594f53585c5b5c564549595c5757';  
-$CONFIG['database']['database']	= '3a232d21243d﻿';  
-$CONFIG['database']['user']		= '1d03';  
-$CONFIG['database']['psw']		= '1a0b170b020314560a091a0110'; 
+$CONFIG['database']['host']		= '122.114.37.97,1435';  
+$CONFIG['database']['database']	= 'AIS20150113205803﻿';  
+$CONFIG['database']['user']		= 'sa';  
+$CONFIG['database']['psw']		= 'ibicf@2015'; 
  
 #[log]
 $CONFIG['logsavedir'] 		= 'logs/';	

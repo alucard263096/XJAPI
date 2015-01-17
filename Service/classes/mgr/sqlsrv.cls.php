@@ -1,5 +1,4 @@
 <?php
- defined('IN_TA') or exit('Access Denied'); 
 
 class DbSqlsrv
 {
