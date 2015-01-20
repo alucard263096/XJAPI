@@ -11,24 +11,15 @@ require 'include/common.inc.php';
  //print_r($r);
  //exit;
  //$arr["validation_code"]=$CONFIG['validation_code'];
- //print_r(getProductList($arr));
+ //$arr["login_name"]="steve_4";
+ //print_r(getCustomer($arr));
  //print_r(getProductCategory($arr));
  //print_r(getProductProperties($arr));
  //exit;
  //registed methods
  $registed_method_arr=array(
-		"GetProductList" => array(
-			"function" => "getProductList",
-			"signature" =>$signature,
-			"docstring" => ""
-		),
-		"GetProductCategory" => array(
-			"function" => "getProductCategory",
-			"signature" =>$signature,
-			"docstring" => ""
-		),
-		"GetProductProperties" => array(
-			"function" => "getProductProperties",
+		"GetCustomer" => array(
+			"function" => "getCustomer",
 			"signature" =>$signature,
 			"docstring" => ""
 		));

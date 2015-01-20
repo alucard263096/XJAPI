@@ -22,4 +22,10 @@
 	$return = $webServiceClient->getResult($arr, 'GetProductProperties');
 	print_r( $return->value());
 
+	
+	$webServiceClient->resetClient('/customer.srv.php');
+	$arr["login_name"]="steve_4";
+	$return = $webServiceClient->getResult($arr, 'GetCustomer');
+	print_r( $return->value());
+
 ?>

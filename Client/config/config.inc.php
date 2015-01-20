@@ -19,7 +19,7 @@ $CONFIG['error_handler'] ="E_ALL";
 
 
 #['Web Service']
-$CONFIG['web_service']['server'] = "192.168.1.105";
+$CONFIG['web_service']['server'] = "192.168.1.103";
 $CONFIG['web_service']['port'] = "80";
 $CONFIG['web_service']['path'] = "/XJAPI/Service";
 
