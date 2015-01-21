@@ -26,7 +26,7 @@
 	public function getProductList($lastUpdatedDate)
 	{
 		$sql="
-		select m.FMASTERID product_id,
+		select m.FMATERIALID product_id,
 m.FNUMBER product_no,
 ml.FNAME,
 base.F_XJ_ALIAS alias,
@@ -45,8 +45,8 @@ base.F_XJ_FIT fitgroup,
 base.F_XJ_FORM manner,
 base.F_XJ_STANDARDWEIGHT standard_weight
  from t_BD_Material m
-inner join T_BD_MATERIAL_L ml on m.FMASTERID=ml.FMATERIALID and ml.FLOCALEID=2052
-inner join t_BD_MaterialBase base on m.FMASTERID=base.FMATERIALID
+inner join T_BD_MATERIAL_L ml on m.FMATERIALID=ml.FMATERIALID and ml.FLOCALEID=2052
+inner join t_BD_MaterialBase base on m.FMATERIALID=base.FMATERIALID
 where base.FISSALE=1 
 and m.FDOCUMENTSTATUS='C' 
 and m.FFORBIDSTATUS='A'
@@ -66,8 +66,8 @@ $sql=$sql."and  m.modifydate>='$lastUpdatedDate'";
 		$sql="
 select gw.FMATERIALID product_id,gw.F_XJ_WEIGHTDECIMAL product_weight 
  from XJ_T_GoodsWeight gw
-inner join T_BD_MATERIAL m on gw.FMATERIALID=m.FMASTERID
-inner join t_BD_MaterialBase base on m.FMASTERID=base.FMATERIALID
+inner join T_BD_MATERIAL m on gw.FMATERIALID=m.FMATERIALID
+inner join t_BD_MaterialBase base on m.FMATERIALID=base.FMATERIALID
 where base.FISSALE=1 
 and m.FDOCUMENTSTATUS='C' 
 and m.FFORBIDSTATUS='A'

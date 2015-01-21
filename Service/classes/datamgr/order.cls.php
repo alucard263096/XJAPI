@@ -23,17 +23,472 @@
 		
 	}
 
-	public function getCustomerByLoginName($LoginName)
+	public function commitSalOrder($inarray)
 	{
+		$customer_id=$inarray["customer_id"];
+		$receiver_id=$inarray["receiver_id"];
+		$receiver_address=$inarray["receiver_address"];
+		$cust_name=$inarray["cust_name"];
+		$cust_address=$inarray["cust_address"];
+		$cust_contact=$inarray["cust_contact"];
+		$cust_fax=$inarray["cust_fax"];
+
 		$sql="select FCUSTID,F_XJ_CUSTYPE, FDOCUMENTSTATUS,FFORBIDSTATUS from T_BD_CUSTOMER
-where F_XJ_WEBLOGONNAME='$LoginName'";
+where FCUSTID=$customer_id 
+and FDOCUMENTSTATUS='C' 
+and FFORBIDSTATUS='A'";
 		
 		$query = $this->dbmgr->query($sql);
 		$result = $this->dbmgr->fetch_array_all($query); 
+		
+		if(count($result)==0){
+			$ret["result"]="INACTIVE_CUSTOMER";
+			return $ret;
+		}
+		
+
+		$product_list=$inarray["product_list"];
+		$material_list="";
+		foreach($product_list as $value){
+			$product_id=$value["product_id"];
+			$sql="
+		select m.FMATERIALID 
+ from t_BD_Material m
+inner join t_BD_MaterialBase base on m.FMATERIALID=base.FMATERIALID
+where base.FISSALE=1 
+and m.FDOCUMENTSTATUS='C' 
+and m.FFORBIDSTATUS='A'
+and m.FMATERIALID=$product_id ";
+		
+			$query = $this->dbmgr->query($sql);
+			$result = $this->dbmgr->fetch_array_all($query); 
+			if(count($result)==0){
+				$material_list.=",$product_id";
+			}
+		}
+		if($material_list!=""){
+			$ret["result"]="INACTIVE_MATERIAL";
+			$ret["inactive_material"]=$material_list;
+			return $ret;
+		}
+
+		$this->dbmgr->begin_trans();
+ 
+		$order_id=$this->getId('FID','t_sal_order');//$result["id"];
+		
+		$sql="INSERT INTO [AIS20150113205803].[dbo].[T_SAL_ORDER]
+           ([FID]
+           ,[FBILLTYPEID]
+           ,[FBILLNO]
+           ,[FDATE]
+           ,[FCUSTID]
+           ,[FSALEORGID]
+           ,[FSALEGROUPID]
+           ,[FSALEDEPTID]
+           ,[FSALERID]
+           ,[FCREATORID]
+           ,[FCREATEDATE]
+           ,[FMODIFIERID]
+           ,[FMODIFYDATE]
+           ,[FDOCUMENTSTATUS]
+           ,[FAPPROVERID]
+           ,[FAPPROVEDATE]
+           ,[FCLOSESTATUS]
+           ,[FCLOSERID]
+           ,[FCLOSEDATE]
+           ,[FCANCELSTATUS]
+           ,[FCANCELLERID]
+           ,[FCANCELDATE]
+           ,[FRECEIVEID]
+           ,[FSETTLEID]
+           ,[FCHARGEID]
+           ,[FVERSIONNO]
+           ,[FCHANGEREASON]
+           ,[FCHANGEDATE]
+           ,[FCHANGERID]
+           ,[FNOTE]
+           ,[FBUSINESSTYPE]
+           ,[FHEADLOCID]
+           ,[FHEADLOCADDRESS]
+           ,[FHEADDELIVERYWAY]
+           ,[FCOUNTRY]
+           ,[FRECEIVEADDRESS]
+           ,[FCREDITCHECKRESULT]
+           ,[FOBJECTTYPEID]
+           ,[FFINALVERSION]
+           ,[FORIGINALFID]
+           ,[FCORRESPONDORGID]
+           ,[FRECCONTACTID]
+           ,[F_XJ_ORDERTYPE]
+           ,[F_XJ_SALETYPE]
+           ,[F_XJ_GOLDTYPE]
+           ,[F_XJ_CUSTARTIFICIAL]
+           ,[F_XJ_CUSTADDRESS]
+           ,[F_XJ_CUSTTEL]
+           ,[F_XJ_CUSTFAX]
+           ,[F_XJ_CONTRACTNO]
+           ,[F_XJ_SECOND]
+           ,[F_XJ_FAX]
+           ,[F_XJ_ADDRESS]
+           ,[F_XJ_ARTIFICIAL]
+           ,[F_XJ_TEL])
+     VALUES
+           ($order_id
+           ,'eacb50844fc84a10b03d7b841f3a6278'
+           ,''
+           ,getdate()
+           ,$customer_id
+           ,1
+           ,0
+           ,0
+           ,0
+           ,100001
+           ,getdate()
+           ,100001
+           ,getdate()
+           ,'Z'
+           ,0
+           ,NULL
+           ,'A'
+           ,0
+           ,NULL
+           ,'A'
+           ,0
+           ,NULL
+           ,$customer_id
+           ,$customer_id
+           ,$customer_id
+           ,'000'
+           ,''
+           ,NULL
+           ,0
+           ,''
+           ,'NORMAL'
+           ,0
+           ,''
+           ,''
+           ,''
+           ,'$receiver_address'
+           ,'0'
+           ,'SAL_SaleOrder'
+           ,'1'
+           ,0
+           ,0
+           ,$receiver_id
+           ,'Cust'
+           ,'ZG'
+           ,'Cust'
+           ,'$cust_name'
+           ,'$cust_address'
+           ,'$cust_contact'
+           ,'$cust_fax'
+           ,''
+           ,''
+           ,''
+           ,''
+           ,''
+           ,'')";
+		   
+		$fin_entry_id=$this->getId('FENTRYID','T_SAL_ORDERFIN');//$result["id"];
+		$query = $this->dbmgr->query($sql);
+		$sql="INSERT INTO [T_SAL_ORDERFIN]
+           ([FENTRYID]
+           ,[FID]
+           ,[FFINDATE]
+           ,[FRECEIPTORGID]
+           ,[FSETTLEORGID]
+           ,[FSETTLEMODEID]
+           ,[FEXCHANGETYPEID]
+           ,[FEXCHANGERATE]
+           ,[FLOCALCURRID]
+           ,[FBILLTAXAMOUNT_LC]
+           ,[FBILLAMOUNT_LC]
+           ,[FBILLALLAMOUNT_LC]
+           ,[FSETTLECURRID]
+           ,[FPRICELISTID]
+           ,[FDISCOUNTLISTID]
+           ,[FPAYADVANCERATE]
+           ,[FPAYADVANCEAMOUNT]
+           ,[FBILLTAXAMOUNT]
+           ,[FBILLAMOUNT]
+           ,[FBILLALLAMOUNT]
+           ,[FPRICETIMEPOINT]
+           ,[FACCOUNTCONDITION]
+           ,[FNEEDPAYADVANCE]
+           ,[FISINCLUDEDTAX]
+           ,[FRECCONDITIONID]
+           ,[FRECBILLID]
+           ,[FJOINORDERAMOUNT]
+           ,[FJOINSTOCKAMOUNT]
+           ,[FCRECHKSTATUS]
+           ,[FCRECHKAMOUNT]
+           ,[FCRECHKDAYS]
+           ,[FCRECHKUSERID])
+     VALUES
+           ($fin_entry_id
+           ,$order_id
+           ,NULL
+           ,0
+           ,0
+           ,0
+           ,1
+           ,1
+           ,1
+           ,0
+           ,0
+           ,0
+           ,1
+           ,0
+           ,0
+           ,0
+           ,0
+           ,0
+           ,0
+           ,0
+           ,0
+           ,0
+           ,0
+           ,'1'
+           ,0
+           ,0
+           ,0
+           ,0
+           ,'A'
+           ,0
+           ,0
+           ,'')";
+		$query = $this->dbmgr->query($sql);
+		$seq=0;
+		$entry_id=$this->getId('FENTRYID','T_SAL_ORDERENTRY');
+		foreach($product_list as $value){
+			$entry_id=$entry_id+1;
+			$product_id=$value["product_id"];
+			$qty=$value["qty"];
+			$single_weight=$value["single_weight"];
+			$fees=$value["single_fees"];
+			$total_weight=$qty*$single_weight;
+			$totalfees=$fees*$total_weight;
+			$seq++;
+			$sql="INSERT INTO [T_SAL_ORDERENTRY]
+           ([FENTRYID]
+           ,[FID]
+           ,[FSEQ]
+           ,[FMAPID]
+           ,[FMAPNAME]
+           ,[FMATERIALID]
+           ,[FAUXPROPID]
+           ,[FBOMID]
+           ,[FUNITID]
+           ,[FQTY]
+           ,[FBASEUNITID]
+           ,[FBASEUNITQTY]
+           ,[FNOTE]
+           ,[FMRPFREEZESTATUS]
+           ,[FFREEZEDATE]
+           ,[FFREEZERID]
+           ,[FMRPTERMINATESTATUS]
+           ,[FTERMINATERID]
+           ,[FTERMINATESTATUS]
+           ,[FTERMINATEDATE]
+           ,[FMRPCLOSESTATUS]
+           ,[FLOT]
+           ,[FCHANGEFLAG]
+           ,[FSTOCKORGID]
+           ,[FSTOCKID]
+           ,[FLOCKQTY]
+           ,[FLOCKFLAG]
+           ,[FOWNERTYPEID]
+           ,[FOWNERID]
+           ,[FLOT_TEXT]
+           ,[FPRODUCEDATE]
+           ,[FEXPIRYDATE]
+           ,[FEXPUNIT]
+           ,[FEXPPERIOD]
+           ,[FRETURNTYPE]
+           ,[FBFLOWID]
+           ,[FPRIORITY]
+           ,[FMTONO]
+           ,[FRESERVETYPE]
+           ,[FPLANDELIVERYDATE]
+           ,[FDELIVERYSTATUS]
+           ,[FOLDQTY]
+           ,[FPROMOTIONMATCHTYPE]
+           ,[F_XJ_QTY]
+           ,[F_XJ_WEIGHTQTY]
+           ,[F_XJ_PRICE]
+           ,[F_XJ_MODEAMOUNT]
+           ,[F_XJ_AMOUNT])
+     VALUES
+           ($entry_id
+           ,$order_id
+           ,$seq
+           ,''
+           ,''
+           ,$product_id
+           ,0
+           ,0
+           ,10097
+           ,$qty
+           ,10097
+           ,$qty
+           ,''
+           ,'A'
+           ,NULL
+           ,0
+           ,'A'
+           ,0
+           ,''
+           ,NULL
+           ,'A'
+           ,0
+           ,''
+           ,1
+           ,0
+           ,0
+           ,'0'
+           ,'BD_OwnerOrg'
+           ,1
+           ,''
+           ,NULL
+           ,NULL
+           ,''
+           ,0
+           ,''
+           ,'813eb52e-5864-4742-8213-d8f9b0972d4f'
+           ,0
+           ,''
+           ,'1'
+           ,NULL
+           ,'A'
+           ,0
+           ,''
+           ,$single_weight
+           ,$total_weight
+           ,$fees
+           ,0
+           ,$totalfees)";
+			$query = $this->dbmgr->query($sql);
+			
+			$sql="INSERT INTO [T_SAL_ORDERENTRY_D]
+           ([FID]
+           ,[FENTRYID]
+           ,[FDELIVERYMAXQTY]
+           ,[FDELIVERYMINQTY]
+           ,[FDELIVERYCONTROL]
+           ,[FTRANSPORTLEADTIME]
+           ,[FPLANDELIVERYDATE]
+           ,[FDELIVERYDATE]
+           ,[FBASEDELIVERYMAXQTY]
+           ,[FBASEDELIVERYMINQTY])
+     VALUES
+           ($order_id
+           ,$entry_id
+           ,$qty
+           ,$qty
+           ,0
+           ,0
+           ,null
+           ,getdate()
+           ,$qty
+           ,$qty)";
+			$query = $this->dbmgr->query($sql);
+			
+			$sql="INSERT INTO [T_SAL_ORDERENTRY_E]
+           ([FENTRYID]
+           ,[FID]
+           ,[FOEMINSTOCKJOINQTY]
+           ,[FBASEOEMINSTOCKJOINQTY])
+     VALUES
+           ($entry_id
+           ,$order_id
+           ,0
+           ,0)";
+			$query = $this->dbmgr->query($sql);
+			
+			$sql="INSERT INTO [T_SAL_ORDERENTRY_F]
+           ([FENTRYID]
+           ,[FID]
+           ,[FPRICECOEFFICIENT]
+           ,[FPRICE]
+           ,[FTAXRATE]
+           ,[FTAXPRICE]
+           ,[FPRICEUNITID]
+           ,[FPRICEUNITQTY]
+           ,[FDISCOUNTRATE]
+           ,[FTAXNETPRICE]
+           ,[FAMOUNT]
+           ,[FAMOUNT_LC]
+           ,[FALLAMOUNT]
+           ,[FALLAMOUNT_LC]
+           ,[FDISCOUNT]
+           ,[FRECEIPTORGID]
+           ,[FSETTLEORGID]
+           ,[FTAXAMOUNT]
+           ,[FTAXAMOUNT_LC]
+           ,[FACCOUNTCONDITION]
+           ,[FLIMITDOWNPRICE]
+           ,[FSETTLETYPEID]
+           ,[FBEFDISAMT]
+           ,[FBEFDISALLAMT]
+           ,[FTAXCOMBINATION]
+           ,[FRECEIPTCONDITIONID]
+           ,[FSYSPRICE]
+           ,[FISFREE]
+           ,[FVALUE]
+           ,[FTAXVALUE]
+           ,[FPRICELISTENTRY]
+           ,[FPRICEPLAN])
+     VALUES
+           ($entry_id
+           ,$order_id
+           ,1
+           ,0
+           ,17
+           ,0
+           ,10097
+           ,$qty
+           ,0
+           ,0
+           ,0
+           ,0
+           ,0
+           ,0
+           ,0
+           ,1
+           ,1
+           ,0
+           ,0
+           ,0
+           ,0
+           ,0
+           ,0
+           ,0
+           ,0
+           ,0
+           ,0
+           ,'0'
+           ,0
+           ,0
+           ,0
+           ,'')";
+			$query = $this->dbmgr->query($sql);
+		}
+		$this->dbmgr->commit_trans();
 
 		
 
-		return $result;
+			$ret["result"]="SUCCESS";
+			$ret["order_id"]=$order_id;
+			return $ret;
+	}
+	
+	public function getId($fk,$tablename){
+		$sql="select isnull(max($fk),100000)+1 id from $tablename";
+		
+		$query = $this->dbmgr->query($sql);
+		$result = $this->dbmgr->fetch_array($query); 
+
+		return $result["id"];
 	}
  }
  
