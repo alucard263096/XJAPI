@@ -97,7 +97,7 @@ class WebServiceClient {
 			$log_str .= "[Web Service Client] Got result from server - result size: ".count($rsp->value())."\n";
 		} else {
 			$log_str .= "[Web Service Client] Cannot get result from server - Method name: ".$method." Error: ".$rsp->faultCode()." Message: ".$rsp->faultString()."\n";
-			echo $log_str;
+			//echo $log_str;
 		}
 		$log_str .= "[Web Service Client] <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<";
 		

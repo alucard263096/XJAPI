@@ -28,13 +28,16 @@
 		$sql="
 		select m.FMATERIALID product_id,
 m.FNUMBER product_no,
-ml.FNAME,
+ml.FNAME product_name,
 base.F_XJ_ALIAS alias,
 base.F_XJ_CATEGORY category,
+cl1.FNAME category_name,
 base.F_XJ_CLASS class,
+cl2.FNAME class_name,
 base.F_XJ_CLASS3 class3,
+cl3.FNAME class3_name,
 base.F_XJ_CLASS4 class4,
-base.F_XJ_CLASS4 class4,
+cl4.FNAME class4_name,
 base.F_XJ_Style style,
 base.F_XJ_GOLDMATERIAL goldmaterial,
 base.F_XJ_REFSIZE size,
@@ -47,13 +50,17 @@ base.F_XJ_STANDARDWEIGHT standard_weight
  from t_BD_Material m
 inner join T_BD_MATERIAL_L ml on m.FMATERIALID=ml.FMATERIALID and ml.FLOCALEID=2052
 inner join t_BD_MaterialBase base on m.FMATERIALID=base.FMATERIALID
+left join XJ_t_Category_L cl1 on base.F_XJ_CATEGORY=cl1.FID and cl1.FLOCALEID=2052
+left join XJ_t_Category_L cl2 on base.F_XJ_CLASS=cl2.FID and cl2.FLOCALEID=2052
+left join XJ_t_Category_L cl3 on base.F_XJ_CLASS3=cl3.FID and cl3.FLOCALEID=2052
+left join XJ_t_Category_L cl4 on base.F_XJ_CLASS4=cl4.FID and cl4.FLOCALEID=2052
 where base.FISSALE=1 
 and m.FDOCUMENTSTATUS='C' 
 and m.FFORBIDSTATUS='A'
 and base.F_XJ_GOODSTYPE=2";
 if($lastUpdatedDate!=""){
 
-$sql=$sql."and  m.modifydate>='$lastUpdatedDate'";
+$sql=$sql."and  m.fmodifydate>='$lastUpdatedDate'";
 
 }
 
@@ -74,7 +81,7 @@ and m.FFORBIDSTATUS='A'
 and base.F_XJ_GOODSTYPE=2";
 if($lastUpdatedDate!=""){
 
-$sql=$sql."and  m.modifydate>='$lastUpdatedDate'";
+$sql=$sql."and  m.fmodifydate>='$lastUpdatedDate'";
 
 }
 

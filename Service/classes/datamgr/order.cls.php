@@ -539,13 +539,14 @@ and m.FMATERIALID=$product_id ";
 		$sql="select 
 s.FID order_id,
 s.FBILLNO order_no,
-s.FDATE order_date,
+CONVERT(varchar(100),s.FDATE, 20) order_date,
 s.F_XJ_CONTRACTNO contract_no,
 s.FRECEIVEADDRESS receive_address,
 s.FRECCONTACTID reveice_contacter_id,
 cc.FCONTACT contacter,
 s.F_XJ_RESULT process_result,
 s.FDOCUMENTSTATUS order_status,
+s.FCLOSESTATUS close_status,
 s.FCUSTID customer_id  from 
 T_SAL_ORDER s 
 left join T_BD_CUSTCONTACT cc on s.FRECCONTACTID=cc.FENTRYID
@@ -571,17 +572,25 @@ left join T_BD_CUSTCONTACT cc on s.FRECCONTACTID=cc.FENTRYID
 		if($order["order_status"]=="C"){
 			$res="WAIT_OUTSTOCK";
 		}
+		if($order["close_status"]=="B"){
+			$res="OUTSTOCKED";
+		}
 		
 		$sql=" select se.FENTRYID row_id,
  se.FSEQ seq,
- se.FMATERIALID material_id,
+ se.FMATERIALID product_id,
  se.FQTY qty,
  se.F_XJ_QTY single_weight,
  se.F_XJ_WEIGHTQTY totle_weight,
  se.F_XJ_PRICE handling_fees,
- se.F_XJ_AMOUNT total_fees
+ se.F_XJ_AMOUNT total_fees,
+ isnull(solk.FBASEUNITQTYOLD,0) outstock_qty,
+ isnull(solk.FBASEUNITQTY,0) outstock_weight,
+ isnull(relk.FBASICUNITQTY,0) receiveable_weight
  from T_SAL_ORDER s
  inner join T_SAL_ORDERENTRY se on s.FID=se.FID
+ left join T_SAL_OUTSTOCKENTRY_LK solk on se.FENTRYID=solk.FSID and solk.FRULEID='XJ_SalOrderToXJ_SalOut' and solk.FSTABLENAME='T_SAL_ORDERENTRY'
+ left join T_AR_RECEIVABLEENTRY_LK relk on solk.FENTRYID=relk.FSID and relk.FRULEID='AR_OutStockToReceivableMap' and relk.FSTABLENAME='T_SAL_OUTSTOCKENTRY'
  where s.FID=$order_id ";
 		
 		$query = $this->dbmgr->query($sql);
@@ -600,13 +609,14 @@ left join T_BD_CUSTCONTACT cc on s.FRECCONTACTID=cc.FENTRYID
 		$sql="select 
 s.FID order_id,
 s.FBILLNO order_no,
-s.FDATE order_date,
+CONVERT(varchar(100),s.FDATE, 20) order_date,
 s.F_XJ_CONTRACTNO contract_no,
 s.FRECEIVEADDRESS receive_address,
 s.FRECCONTACTID reveice_contacter_id,
 cc.FCONTACT contacter,
 s.F_XJ_RESULT process_result,
 s.FDOCUMENTSTATUS order_status,
+s.FCLOSESTATUS close_status,
 s.FCUSTID customer_id  from 
 T_SAL_ORDER s 
 left join T_BD_CUSTCONTACT cc on s.FRECCONTACTID=cc.FENTRYID
@@ -629,18 +639,26 @@ left join T_BD_CUSTCONTACT cc on s.FRECCONTACTID=cc.FENTRYID
 			if($result[$i]["order_status"]=="C"){
 				$res="WAIT_OUTSTOCK";
 			}
+			if($result[$i]["close_status"]=="B"){
+				$res="OUTSTOCKED";
+			}
 			$result[$i]["order_result"]=$res;
 			$order_id=$result[$i]["order_id"];
 			$sql=" select se.FENTRYID row_id,
-	 se.FSEQ seq,
-	 se.FMATERIALID material_id,
-	 se.FQTY qty,
-	 se.F_XJ_QTY single_weight,
-	 se.F_XJ_WEIGHTQTY totle_weight,
-	 se.F_XJ_PRICE handling_fees,
-	 se.F_XJ_AMOUNT total_fees
-	 from T_SAL_ORDER s
-	 inner join T_SAL_ORDERENTRY se on s.FID=se.FID
+ se.FSEQ seq,
+ se.FMATERIALID product_id,
+ se.FQTY qty,
+ se.F_XJ_QTY single_weight,
+ se.F_XJ_WEIGHTQTY totle_weight,
+ se.F_XJ_PRICE handling_fees,
+ se.F_XJ_AMOUNT total_fees,
+ isnull(solk.FBASEUNITQTYOLD,0) outstock_qty,
+ isnull(solk.FBASEUNITQTY,0) outstock_weight,
+ isnull(relk.FBASICUNITQTY,0) receiveable_weight
+ from T_SAL_ORDER s
+ inner join T_SAL_ORDERENTRY se on s.FID=se.FID
+ left join T_SAL_OUTSTOCKENTRY_LK solk on se.FENTRYID=solk.FSID and solk.FRULEID='XJ_SalOrderToXJ_SalOut' and solk.FSTABLENAME='T_SAL_ORDERENTRY'
+ left join T_AR_RECEIVABLEENTRY_LK relk on solk.FENTRYID=relk.FSID and relk.FRULEID='AR_OutStockToReceivableMap' and relk.FSTABLENAME='T_SAL_OUTSTOCKENTRY'
 	 where s.FID=$order_id ";
 			
 			$query = $this->dbmgr->query($sql);
