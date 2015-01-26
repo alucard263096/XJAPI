@@ -1,0 +1,6 @@
+﻿http://localhost/XJAPI/Client/product_list.php
+http://localhost/XJAPI/Client/customer_detail.php
+http://localhost/XJAPI/Client/commit_order.php
+http://localhost/XJAPI/Client/order_list.php
+http://localhost/XJAPI/Client/order_detail.php
+

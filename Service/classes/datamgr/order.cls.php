@@ -76,7 +76,7 @@ and m.FMATERIALID=$product_id ";
  
 		$order_id=$this->getId('FID','t_sal_order');//$result["id"];
 		
-		$sql="INSERT INTO [AIS20150113205803].[dbo].[T_SAL_ORDER]
+		$sql="INSERT INTO [T_SAL_ORDER]
            ([FID]
            ,[FBILLTYPEID]
            ,[FBILLNO]
@@ -387,7 +387,7 @@ and m.FMATERIALID=$product_id ";
            ,$qty
            ,0
            ,0
-           ,null
+           ,DATEADD(dd,1,GETDATE())
            ,getdate()
            ,$qty
            ,$qty)";
@@ -472,10 +472,53 @@ and m.FMATERIALID=$product_id ";
            ,0
            ,'')";
 			$query = $this->dbmgr->query($sql);
+			
+			$detail_id=$this->getId('FDETAILID','T_SAL_ORDERENTRYDELIPLAN');
+			$sql="INSERT INTO [T_SAL_ORDERENTRYDELIPLAN]
+           ([FDETAILID]
+           ,[FENTRYID]
+           ,[FSEQ]
+           ,[FDELIVERYDATE]
+           ,[FDELIVERYTIME]
+           ,[FPLANUNITID]
+           ,[FPLANQTY]
+           ,[FDELICOMMITQTY]
+           ,[FDELIREMAINQTY]
+           ,[FSTOCKORGID]
+           ,[FSTOCKID]
+           ,[FDETAILLOCID]
+           ,[FDETAILLOCADDRESS]
+           ,[FTRANSPORTLEADTIME]
+           ,[FPLANDELIVERYDATE]
+           ,[FBASEPLANQTY]
+           ,[FBASEDELICOMMITQTY]
+           ,[FBASEDELIREMAINQTY]
+           ,[FPLANBASEUNITID]
+           ,[FRELBILLNO])
+     VALUES
+           ($detail_id
+		   ,$entry_id
+           ,$order_id
+           ,DATEADD(dd,1,GETDATE())
+           ,null
+           ,10097
+           ,$qty
+           ,0
+           ,$qty
+           ,0
+           ,0
+           ,0
+           ,'$receiver_address'
+           ,0
+           ,DATEADD(dd,1,GETDATE())
+           ,$qty
+           ,0
+           ,$qty
+           ,10097
+           ,'')";
+			$query = $this->dbmgr->query($sql);
 		}
 		$this->dbmgr->commit_trans();
-
-		
 
 			$ret["result"]="SUCCESS";
 			$ret["order_id"]=$order_id;
@@ -489,6 +532,142 @@ and m.FMATERIALID=$product_id ";
 		$result = $this->dbmgr->fetch_array($query); 
 
 		return $result["id"];
+	}
+
+	public function getOrderStatus($order_id,$customer_id){
+		
+		$sql="select 
+s.FID order_id,
+s.FBILLNO order_no,
+CONVERT(varchar(100),s.FDATE, 20) order_date,
+s.F_XJ_CONTRACTNO contract_no,
+s.FRECEIVEADDRESS receive_address,
+s.FRECCONTACTID reveice_contacter_id,
+cc.FCONTACT contacter,
+s.F_XJ_RESULT process_result,
+s.FDOCUMENTSTATUS order_status,
+s.FCLOSESTATUS close_status,
+s.FCUSTID customer_id  from 
+T_SAL_ORDER s 
+left join T_BD_CUSTCONTACT cc on s.FRECCONTACTID=cc.FENTRYID
+ where s.FID=$order_id and s.FCUSTID=$customer_id
+ ";
+ 
+		$query = $this->dbmgr->query($sql);
+		$result = $this->dbmgr->fetch_array_all($query); 
+
+		if(count($result)==0){
+			$ret["result"]="NO_RECORD";
+			return $ret;
+		}
+		$order=$result[0];
+		if($order["order_status"]=="Z"
+		||$order["order_status"]=="A"
+		||$order["order_status"]=="B"){
+			$res="WAIT_APPROVE";
+		}
+		if($order["order_status"]=="D"){
+			$res="REJECT";
+		}
+		if($order["order_status"]=="C"){
+			$res="WAIT_OUTSTOCK";
+		}
+		if($order["close_status"]=="B"){
+			$res="OUTSTOCKED";
+		}
+		
+		$sql=" select se.FENTRYID row_id,
+ se.FSEQ seq,
+ se.FMATERIALID product_id,
+ se.FQTY qty,
+ se.F_XJ_QTY single_weight,
+ se.F_XJ_WEIGHTQTY totle_weight,
+ se.F_XJ_PRICE handling_fees,
+ se.F_XJ_AMOUNT total_fees,
+ isnull(solk.FBASEUNITQTYOLD,0) outstock_qty,
+ isnull(solk.FBASEUNITQTY,0) outstock_weight,
+ isnull(relk.FBASICUNITQTY,0) receiveable_weight
+ from T_SAL_ORDER s
+ inner join T_SAL_ORDERENTRY se on s.FID=se.FID
+ left join T_SAL_OUTSTOCKENTRY_LK solk on se.FENTRYID=solk.FSID and solk.FRULEID='XJ_SalOrderToXJ_SalOut' and solk.FSTABLENAME='T_SAL_ORDERENTRY'
+ left join T_AR_RECEIVABLEENTRY_LK relk on solk.FENTRYID=relk.FSID and relk.FRULEID='AR_OutStockToReceivableMap' and relk.FSTABLENAME='T_SAL_OUTSTOCKENTRY'
+ where s.FID=$order_id ";
+		
+		$query = $this->dbmgr->query($sql);
+		$result = $this->dbmgr->fetch_array_all($query); 
+		$order["order_detail"]=$result;
+		
+		$Array=Array();
+		$Array["result"]=$res;
+		$Array["sale_order"]=$order;
+		return $Array;
+	}
+	
+	
+	public function getCustomerOrderList($customer_id,$start_date,$end_date){
+		
+		$sql="select 
+s.FID order_id,
+s.FBILLNO order_no,
+CONVERT(varchar(100),s.FDATE, 20) order_date,
+s.F_XJ_CONTRACTNO contract_no,
+s.FRECEIVEADDRESS receive_address,
+s.FRECCONTACTID reveice_contacter_id,
+cc.FCONTACT contacter,
+s.F_XJ_RESULT process_result,
+s.FDOCUMENTSTATUS order_status,
+s.FCLOSESTATUS close_status,
+s.FCUSTID customer_id  from 
+T_SAL_ORDER s 
+left join T_BD_CUSTCONTACT cc on s.FRECCONTACTID=cc.FENTRYID
+ where  s.FCUSTID=$customer_id and s.FDATE>='$start_date' and s.FDATE<='$end_date'
+ order by order_date
+ ";
+ 
+		$query = $this->dbmgr->query($sql);
+		$result = $this->dbmgr->fetch_array_all($query); 
+		$count=count($result);
+		for($i=0;$i<$count;$i++){
+			if($result[$i]["order_status"]=="Z"
+			||$result[$i]["order_status"]=="A"
+			||$result[$i]["order_status"]=="B"){
+				$res="WAIT_APPROVE";
+			}
+			if($result[$i]["order_status"]=="D"){
+				$res="REJECT";
+			}
+			if($result[$i]["order_status"]=="C"){
+				$res="WAIT_OUTSTOCK";
+			}
+			if($result[$i]["close_status"]=="B"){
+				$res="OUTSTOCKED";
+			}
+			$result[$i]["order_result"]=$res;
+			$order_id=$result[$i]["order_id"];
+			$sql=" select se.FENTRYID row_id,
+ se.FSEQ seq,
+ se.FMATERIALID product_id,
+ se.FQTY qty,
+ se.F_XJ_QTY single_weight,
+ se.F_XJ_WEIGHTQTY totle_weight,
+ se.F_XJ_PRICE handling_fees,
+ se.F_XJ_AMOUNT total_fees,
+ isnull(solk.FBASEUNITQTYOLD,0) outstock_qty,
+ isnull(solk.FBASEUNITQTY,0) outstock_weight,
+ isnull(relk.FBASICUNITQTY,0) receiveable_weight
+ from T_SAL_ORDER s
+ inner join T_SAL_ORDERENTRY se on s.FID=se.FID
+ left join T_SAL_OUTSTOCKENTRY_LK solk on se.FENTRYID=solk.FSID and solk.FRULEID='XJ_SalOrderToXJ_SalOut' and solk.FSTABLENAME='T_SAL_ORDERENTRY'
+ left join T_AR_RECEIVABLEENTRY_LK relk on solk.FENTRYID=relk.FSID and relk.FRULEID='AR_OutStockToReceivableMap' and relk.FSTABLENAME='T_SAL_OUTSTOCKENTRY'
+	 where s.FID=$order_id ";
+			
+			$query = $this->dbmgr->query($sql);
+			$detail = $this->dbmgr->fetch_array_all($query); 
+			$result[$i]["order_detail"]=$detail;
+		
+		}
+		
+		return $result;
 	}
  }
  
